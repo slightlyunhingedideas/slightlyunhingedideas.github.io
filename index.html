@@ -285,13 +285,14 @@
       const attemptsPill = document.getElementById("attemptsPill");
       const success = document.getElementById("success");
 
-      let noAttempts = 0;
+      // ✅ Start at -1 so the first interaction shows noPhrases[0]
+      let noAttempts = -1;
 
       // ✅ Option 2: "Mostly stays put" tuning
       let lastDodge = 0;
       const DODGE_COOLDOWN_MS = 900;  // slower movement
       const DODGE_DELAY_MS = 140;     // pause so text is readable
-      const MOVE_EVERY_N_TRIES = 1;   // only moves every 1 interactions (mostly stays put)
+      const MOVE_EVERY_N_TRIES = 2;   // moves every 2 interactions (mostly stays put)
 
       const noPhrases = [
         "No 🙃",
@@ -323,39 +324,42 @@
         lastDodge = now;
 
         noAttempts++;
-        attemptsPill.textContent = `No attempts: ${noAttempts}`;
+        attemptsPill.textContent = `No attempts: ${Math.max(0, noAttempts)}`;
 
         const shrink = clamp(1 - noAttempts * 0.04, 0.75, 1);
 
-        // Change label each time (so it's funny/readable)
-        if (noAttempts >= noPhrases.length - 1) {
+        // ✅ Show ALL phrases including the last one.
+        // Convert to Yes only AFTER the last phrase has been shown once.
+        if (noAttempts <= noPhrases.length - 1) {
+          noBtn.textContent = noPhrases[noAttempts];
+          statusPill.textContent = "Status: “No” is considering its life choices…";
+        } else {
           noBtn.textContent = "Yes 💚";
           noBtn.style.background = "linear-gradient(135deg, #22c55e, #16a34a)";
           statusPill.textContent = "Status: The universe corrected itself ✅";
           noBtn.onclick = acceptYes;
           return;
-        } else {
-          noBtn.textContent = noPhrases[noAttempts];
-          statusPill.textContent = "Status: “No” is considering its life choices…";
         }
 
-        // ✅ Only MOVE every N tries (mostly stays put)
+        // ✅ Mostly stays put: only MOVE every N tries
         const shouldMove = (noAttempts % MOVE_EVERY_N_TRIES === 0);
 
         if (!shouldMove) {
-          // Tiny little “nudge” so it feels alive but readable
+          // Small nudge so it feels alive but readable
           noBtn.style.transform = `translate(20%, -50%) scale(${shrink})`;
           noBtn.animate(
-            [{transform:`translate(20%, -50%) scale(${shrink})`},
-             {transform:`translate(20%, -50%) scale(${shrink}) rotate(-1deg)`},
-             {transform:`translate(20%, -50%) scale(${shrink}) rotate(1deg)`},
-             {transform:`translate(20%, -50%) scale(${shrink})`}],
+            [
+              {transform:`translate(20%, -50%) scale(${shrink})`},
+              {transform:`translate(20%, -50%) scale(${shrink}) rotate(-1deg)`},
+              {transform:`translate(20%, -50%) scale(${shrink}) rotate(1deg)`},
+              {transform:`translate(20%, -50%) scale(${shrink})`}
+            ],
             {duration:220, iterations:1}
           );
           return;
         }
 
-        // ✅ Pause briefly so she can read the new text, then move
+        // Pause briefly so she can read the new text, then move
         setTimeout(() => {
           const rect = stage.getBoundingClientRect();
           const btnRect = noBtn.getBoundingClientRect();
@@ -371,7 +375,6 @@
           noBtn.style.top = y + "px";
           noBtn.style.transform = `translate(0,0) scale(${shrink})`;
 
-          // gentler wiggle
           stage.animate(
             [
               {transform:"translate(0,0)"},
@@ -387,12 +390,10 @@
       // Buttons respond
       yesBtn.addEventListener("click", acceptYes);
 
-      // ✅ Less chaos: dodges only when you interact with the button
+      // Less chaos: dodges only when you interact with the button
       noBtn.addEventListener("mouseenter", maybeDodge);
       noBtn.addEventListener("click", (e) => { e.preventDefault(); maybeDodge(); });
       noBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); maybeDodge(); });
-
-      // ✅ Removed "finger-near" dodging entirely (too chaotic)
 
       // Confetti
       const canvas = document.getElementById("confetti");
