@@ -15,12 +15,20 @@
       --yes2:#16a34a;
       --shadow: 0 20px 60px rgba(0,0,0,.18);
     }
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; color:var(--text); }
 
-    /* ✅ allow scrolling if content needs it (mobile) */
+    *{ box-sizing:border-box; }
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--text);
+    }
+
+    /* ✅ Mobile-friendly: allow scroll and safe-area padding (notches) */
     body{
       overflow:auto;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right)
+               env(safe-area-inset-bottom) env(safe-area-inset-left);
       background:
         radial-gradient(1000px 600px at 20% 10%, rgba(255,255,255,.22), transparent 60%),
         radial-gradient(900px 500px at 80% 0%, rgba(255,255,255,.18), transparent 55%),
@@ -53,24 +61,26 @@
       to{ transform: translateY(-120vh) rotate(45deg); opacity:0; }
     }
 
+    /* ✅ On phones, give extra side padding so content doesn't feel clipped */
     .wrap{
       min-height:100%;
       display:grid;
       place-items:center;
-      padding:24px;
+      padding: 24px max(24px, env(safe-area-inset-left)) 24px max(24px, env(safe-area-inset-right));
       position: relative;
       z-index: 1;
     }
 
     .card{
-      width:min(720px, 92vw);
+      width:min(720px, 100%);
       background: var(--card);
       border: 1px solid rgba(255,255,255,.55);
       border-radius: 28px;
       box-shadow: var(--shadow);
-      padding: 28px 26px 22px;
+      padding: 28px 18px 22px; /* ✅ slightly smaller side padding for narrow screens */
       position:relative;
       backdrop-filter: blur(12px);
+      overflow: hidden; /* keeps canvas tidy */
     }
 
     canvas#confetti{
@@ -90,10 +100,23 @@
       font-weight:800;
       letter-spacing:.2px;
       margin-bottom:14px;
+      max-width:100%;
+      flex-wrap:wrap;
     }
 
-    h1{ margin:0 0 10px; font-size: clamp(28px, 3.4vw, 44px); line-height:1.05; letter-spacing:-.7px; }
-    p{ margin:0 0 18px; color:var(--muted); font-size: clamp(15px, 1.7vw, 18px); line-height:1.45; }
+    h1{
+      margin:0 0 10px;
+      font-size: clamp(24px, 5.2vw, 44px);
+      line-height:1.05;
+      letter-spacing:-.7px;
+      word-break: break-word;
+    }
+    p{
+      margin:0 0 18px;
+      color:var(--muted);
+      font-size: clamp(15px, 1.7vw, 18px);
+      line-height:1.45;
+    }
 
     /* ✅ Stage defaults small, expands after Yes */
     .stage{
@@ -115,36 +138,48 @@
     button{
       border:0;
       font-weight:900;
-      padding: 14px 18px;
+      padding: 14px 16px;
       border-radius: 16px;
       cursor:pointer;
       box-shadow: 0 12px 30px rgba(0,0,0,.18);
       transition: transform .12s ease, filter .12s ease;
       user-select:none;
       -webkit-tap-highlight-color: transparent;
+      max-width: 100%;
     }
     button:active{ transform: scale(.98); }
 
-    #yesBtn{
-      background: linear-gradient(135deg, var(--yes), var(--yes2));
-      color:white;
+    /* ✅ FIX: make buttons fit on small screens (no side clipping) */
+    #yesBtn, #noBtn{
       position:absolute;
-      left: 50%;
       top: 55%;
-      transform: translate(-120%, -50%);
-      min-width: 170px;
+      width: clamp(120px, 38vw, 170px); /* responsive */
+      min-width: 0;                    /* ✅ remove hard min-width */
     }
 
-    /* ✅ smoother movement so it’s less jumpy */
+    #yesBtn{
+      left: 50%;
+      transform: translate(calc(-100% - 10px), -50%); /* left side with gap */
+      background: linear-gradient(135deg, var(--yes), var(--yes2));
+      color:white;
+    }
+
     #noBtn{
+      left: 50%;
+      transform: translate(10px, -50%); /* right side with gap */
       background: linear-gradient(135deg, #ff4d6d, #ff0f7b);
       color:white;
-      position:absolute;
-      left: 50%;
-      top: 55%;
-      transform: translate(20%, -50%);
-      min-width: 170px;
       transition: left .22s ease, top .22s ease, transform .12s ease, filter .12s ease;
+    }
+
+    /* ✅ Extra tiny screens: stack buttons vertically */
+    @media (max-width: 360px){
+      #yesBtn, #noBtn{
+        width: min(220px, 80%);
+        left: 50%;
+      }
+      #yesBtn{ top: 46%; transform: translate(-50%, -50%); }
+      #noBtn{ top: 68%; transform: translate(-50%, -50%); }
     }
 
     .footer{
@@ -155,8 +190,20 @@
       gap:14px;
       flex-wrap:wrap;
     }
-    .tiny{ font-size: 13px; color: rgba(36,27,47,.62); display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .pill{ padding:8px 12px; border-radius:999px; background: rgba(255,255,255,.7); border:1px solid rgba(0,0,0,.06); }
+    .tiny{
+      font-size: 13px;
+      color: rgba(36,27,47,.62);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .pill{
+      padding:8px 12px;
+      border-radius:999px;
+      background: rgba(255,255,255,.7);
+      border:1px solid rgba(0,0,0,.06);
+    }
 
     /* ✅ Success is no longer absolute inside a tiny clipped box */
     .success{
@@ -176,11 +223,27 @@
     .success.show{ display:block; animation: pop .25s ease; }
     @keyframes pop{ from{ transform: scale(.98); opacity:0; } to{ transform: scale(1); opacity:1; } }
 
-    .success h2{ margin:0 0 8px; font-size: clamp(22px, 2.4vw, 32px); letter-spacing:-.3px; }
-    .success .grid{ display:grid; grid-template-columns: 1.1fr .9fr; gap: 14px; margin-top: 10px; }
-    @media (max-width: 640px){ .success .grid{ grid-template-columns:1fr; } }
+    .success h2{
+      margin:0 0 8px;
+      font-size: clamp(20px, 4.6vw, 32px);
+      letter-spacing:-.3px;
+    }
+    .success .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 14px;
+      margin-top: 10px;
+    }
+    @media (max-width: 640px){
+      .success .grid{ grid-template-columns:1fr; }
+    }
 
-    .box{ border-radius: 16px; padding: 14px; background: rgba(255,255,255,.8); border:1px solid rgba(0,0,0,.06); }
+    .box{
+      border-radius: 16px;
+      padding: 14px;
+      background: rgba(255,255,255,.8);
+      border:1px solid rgba(0,0,0,.06);
+    }
     .box b{ display:block; margin-bottom:6px; }
     .box input{
       width:100%;
@@ -228,7 +291,7 @@
             </div>
             <div class="box">
               <b>Jay’s promise</b>
-              <input id="promise" value="Shit chat and good vibes" />
+              <input id="promise" value="Shit chat, bullying, and I’ll behave (mostly)" />
             </div>
           </div>
 
@@ -275,7 +338,7 @@
         document.body.appendChild(heart);
         setTimeout(() => heart.remove(), dur * 1000);
       };
-      setInterval(spawnHearts, 240);
+      setInterval(spawnHearts, 300); // ✅ slightly lighter for phones
 
       const stage = document.getElementById("stage");
       const buttons = document.getElementById("buttons");
@@ -285,14 +348,14 @@
       const attemptsPill = document.getElementById("attemptsPill");
       const success = document.getElementById("success");
 
-      // ✅ Start at -1 so the first interaction shows noPhrases[0]
+      // ✅ Undo change: first click should change the text
       let noAttempts = 0;
 
       // ✅ Option 2: "Mostly stays put" tuning
       let lastDodge = 0;
-      const DODGE_COOLDOWN_MS = 900;  // slower movement
-      const DODGE_DELAY_MS = 140;     // pause so text is readable
-      const MOVE_EVERY_N_TRIES = 2;   // moves every 2 interactions (mostly stays put)
+      const DODGE_COOLDOWN_MS = 900;
+      const DODGE_DELAY_MS = 140;
+      const MOVE_EVERY_N_TRIES = 2; // moves every 2 interactions
 
       const noPhrases = [
         "No 🙃",
@@ -324,12 +387,11 @@
         lastDodge = now;
 
         noAttempts++;
-        attemptsPill.textContent = `No attempts: ${Math.max(0, noAttempts)}`;
+        attemptsPill.textContent = `No attempts: ${noAttempts}`;
 
         const shrink = clamp(1 - noAttempts * 0.04, 0.75, 1);
 
-        // ✅ Show ALL phrases including the last one.
-        // Convert to Yes only AFTER the last phrase has been shown once.
+        // ✅ Show ALL phrases including the last one, then convert to Yes on the next click
         if (noAttempts <= noPhrases.length - 1) {
           noBtn.textContent = noPhrases[noAttempts];
           statusPill.textContent = "Status: “No” is considering its life choices…";
@@ -341,18 +403,18 @@
           return;
         }
 
-        // ✅ Mostly stays put: only MOVE every N tries
+        // Mostly stays put: only MOVE every N tries
         const shouldMove = (noAttempts % MOVE_EVERY_N_TRIES === 0);
 
         if (!shouldMove) {
           // Small nudge so it feels alive but readable
-          noBtn.style.transform = `translate(20%, -50%) scale(${shrink})`;
+          noBtn.style.transform = `translate(10px, -50%) scale(${shrink})`;
           noBtn.animate(
             [
-              {transform:`translate(20%, -50%) scale(${shrink})`},
-              {transform:`translate(20%, -50%) scale(${shrink}) rotate(-1deg)`},
-              {transform:`translate(20%, -50%) scale(${shrink}) rotate(1deg)`},
-              {transform:`translate(20%, -50%) scale(${shrink})`}
+              {transform:`translate(10px, -50%) scale(${shrink})`},
+              {transform:`translate(10px, -50%) scale(${shrink}) rotate(-1deg)`},
+              {transform:`translate(10px, -50%) scale(${shrink}) rotate(1deg)`},
+              {transform:`translate(10px, -50%) scale(${shrink})`}
             ],
             {duration:220, iterations:1}
           );
@@ -390,8 +452,7 @@
       // Buttons respond
       yesBtn.addEventListener("click", acceptYes);
 
-      // Less chaos: dodges only when you interact with the button
-      noBtn.addEventListener("mouseenter", maybeDodge);
+      // ✅ Mobile-friendly: tap/click triggers dodge. (No hover needed on phones.)
       noBtn.addEventListener("click", (e) => { e.preventDefault(); maybeDodge(); });
       noBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); maybeDodge(); });
 
@@ -412,11 +473,11 @@
       function popConfetti(){
         cancelAnimationFrame(confettiAnim);
         resizeCanvas();
-        confetti = Array.from({length: 190}, () => ({
+        confetti = Array.from({length: 140}, () => ({
           x: canvas.width/2,
           y: canvas.height/3,
-          vx: (Math.random()-0.5)*11,
-          vy: (Math.random()-1.0)*11,
+          vx: (Math.random()-0.5)*10,
+          vy: (Math.random()-1.0)*10,
           g: 0.22 + Math.random()*0.18,
           s: 4 + Math.random()*7,
           r: Math.random()*Math.PI
@@ -442,7 +503,7 @@
 
           confetti = confetti.filter(p => p.y < canvas.height + 40 && p.x > -40 && p.x < canvas.width + 40);
 
-          if (elapsed < 2300 && confetti.length){
+          if (elapsed < 2200 && confetti.length){
             confettiAnim = requestAnimationFrame(tick);
           } else {
             ctx.clearRect(0,0,canvas.width,canvas.height);
