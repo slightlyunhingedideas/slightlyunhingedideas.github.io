@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maisie? 💘</title>
+  <style>
+    :root{
+      --bg1:#ff5ea8;
+      --bg2:#7c4dff;
+      --card:#ffffffea;
+      --text:#241b2f;
+      --muted:#6b5a7a;
+      --yes:#22c55e;
+      --yes2:#16a34a;
+      --shadow: 0 20px 60px rgba(0,0,0,.18);
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; color:var(--text); }
+
+    /* ✅ allow scrolling if content needs it (mobile) */
+    body{
+      overflow:auto;
+      background:
+        radial-gradient(1000px 600px at 20% 10%, rgba(255,255,255,.22), transparent 60%),
+        radial-gradient(900px 500px at 80% 0%, rgba(255,255,255,.18), transparent 55%),
+        linear-gradient(120deg, var(--bg1), var(--bg2));
+    }
+
+    /* Floating hearts */
+    .heart{
+      position:absolute;
+      width:18px; height:18px;
+      background: rgba(255,255,255,.55);
+      transform: rotate(45deg);
+      border-radius: 4px;
+      animation: floatUp linear forwards;
+      pointer-events:none;
+      z-index: 0;
+    }
+    .heart:before, .heart:after{
+      content:"";
+      position:absolute;
+      width:18px; height:18px;
+      background: rgba(255,255,255,.55);
+      border-radius: 50%;
+    }
+    .heart:before{ left:-9px; top:0; }
+    .heart:after{ top:-9px; left:0; }
+    @keyframes floatUp{
+      from{ transform: translateY(0) rotate(45deg); opacity:0; }
+      10%{ opacity:.65; }
+      to{ transform: translateY(-120vh) rotate(45deg); opacity:0; }
+    }
+
+    .wrap{
+      min-height:100%;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card{
+      width:min(720px, 92vw);
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.55);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 28px 26px 22px;
+      position:relative;
+      backdrop-filter: blur(12px);
+    }
+
+    canvas#confetti{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+    }
+
+    .badge{
+      display:inline-flex;
+      gap:10px;
+      align-items:center;
+      padding:10px 14px;
+      border-radius:999px;
+      background: rgba(255,255,255,.7);
+      border:1px solid rgba(0,0,0,.05);
+      font-weight:800;
+      letter-spacing:.2px;
+      margin-bottom:14px;
+    }
+
+    h1{ margin:0 0 10px; font-size: clamp(28px, 3.4vw, 44px); line-height:1.05; letter-spacing:-.7px; }
+    p{ margin:0 0 18px; color:var(--muted); font-size: clamp(15px, 1.7vw, 18px); line-height:1.45; }
+
+    /* ✅ Stage defaults small, expands after Yes */
+    .stage{
+      position:relative;
+      height: 180px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,.35));
+      border: 1px dashed rgba(0,0,0,.10);
+      overflow:hidden;
+    }
+    .stage.expanded{
+      height:auto;
+      overflow:visible;
+      padding:14px;
+    }
+
+    .buttons{ position:absolute; inset:0; }
+
+    button{
+      border:0;
+      font-weight:900;
+      padding: 14px 18px;
+      border-radius: 16px;
+      cursor:pointer;
+      box-shadow: 0 12px 30px rgba(0,0,0,.18);
+      transition: transform .12s ease, filter .12s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:active{ transform: scale(.98); }
+
+    #yesBtn{
+      background: linear-gradient(135deg, var(--yes), var(--yes2));
+      color:white;
+      position:absolute;
+      left: 50%;
+      top: 55%;
+      transform: translate(-120%, -50%);
+      min-width: 170px;
+    }
+
+    /* ✅ smoother movement so it’s less jumpy */
+    #noBtn{
+      background: linear-gradient(135deg, #ff4d6d, #ff0f7b);
+      color:white;
+      position:absolute;
+      left: 50%;
+      top: 55%;
+      transform: translate(20%, -50%);
+      min-width: 170px;
+      transition: left .22s ease, top .22s ease, transform .12s ease, filter .12s ease;
+    }
+
+    .footer{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-top:14px;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+    .tiny{ font-size: 13px; color: rgba(36,27,47,.62); display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .pill{ padding:8px 12px; border-radius:999px; background: rgba(255,255,255,.7); border:1px solid rgba(0,0,0,.06); }
+
+    /* ✅ Success is no longer absolute inside a tiny clipped box */
+    .success{
+      position: relative;
+      margin-top: 12px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.92);
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow: 0 16px 50px rgba(0,0,0,.18);
+      padding: 18px;
+      display:none;
+
+      max-height: min(60vh, 520px);
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .success.show{ display:block; animation: pop .25s ease; }
+    @keyframes pop{ from{ transform: scale(.98); opacity:0; } to{ transform: scale(1); opacity:1; } }
+
+    .success h2{ margin:0 0 8px; font-size: clamp(22px, 2.4vw, 32px); letter-spacing:-.3px; }
+    .success .grid{ display:grid; grid-template-columns: 1.1fr .9fr; gap: 14px; margin-top: 10px; }
+    @media (max-width: 640px){ .success .grid{ grid-template-columns:1fr; } }
+
+    .box{ border-radius: 16px; padding: 14px; background: rgba(255,255,255,.8); border:1px solid rgba(0,0,0,.06); }
+    .box b{ display:block; margin-bottom:6px; }
+    .box input{
+      width:100%;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,.12);
+      padding: 10px 12px;
+      font-size: 15px;
+      outline:none;
+    }
+    .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+    .secondary{ background: rgba(36,27,47,.08); color: var(--text); box-shadow:none; border:1px solid rgba(0,0,0,.06); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" id="card">
+      <canvas id="confetti"></canvas>
+
+      <div class="badge">💌 Jay’s Slightly Cringe Valentine Invite</div>
+      <h1 id="headline">Maisie… will you be my Valentine’s Day date? 💘</h1>
+      <p id="subhead">You're in quarantine but I still think we <em>could</em> manage a cute date. Press the “No” button at your own risk.</p>
+
+      <div class="stage" id="stage">
+        <div class="buttons" id="buttons">
+          <button id="yesBtn" type="button">Yes 💚</button>
+          <button id="noBtn" type="button">No 🙃</button>
+        </div>
+
+        <div class="success" id="success">
+          <h2>OKAYY!! It’s a date 🥰</h2>
+          <p style="margin-bottom:12px">Maisie said yes. Jay is pretending to be cool about it (unsuccessfully).</p>
+
+          <div class="grid">
+            <div class="box">
+              <b>Where?</b>
+              <input id="where" value="Wherever is migraine approved" />
+            </div>
+            <div class="box">
+              <b>When?</b>
+              <input id="when" value="14th February (obvs)" />
+            </div>
+            <div class="box">
+              <b>Dress code?</b>
+              <input id="dress" value="Ideally, nothing" />
+            </div>
+            <div class="box">
+              <b>Jay’s promise</b>
+              <input id="promise" value="Shit chat, bullying, and I’ll behave (mostly)" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="copyBtn" class="secondary" type="button">Copy date plan 📋</button>
+            <button id="replayBtn" class="secondary" type="button">Replay confetti 🎉</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="tiny">
+          <span class="pill" id="statusPill">Status: Awaiting Maisie’s response…</span>
+          <span class="pill" id="attemptsPill">No attempts: 0</span>
+          <span class="pill" id="errorPill" style="display:none;">JS error: check console</span>
+        </div>
+        <div class="tiny">
+          <span class="pill">Made to ✨annoy✨ you</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // If anything errors, show it on the page
+    window.addEventListener("error", () => {
+      const e = document.getElementById("errorPill");
+      if (e) e.style.display = "inline-flex";
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Floating hearts
+      const spawnHearts = () => {
+        const heart = document.createElement("div");
+        heart.className = "heart";
+        const size = 10 + Math.random() * 18;
+        heart.style.width = size + "px";
+        heart.style.height = size + "px";
+        heart.style.left = (Math.random() * 100) + "vw";
+        heart.style.bottom = (-20 - Math.random()*40) + "px";
+        heart.style.opacity = (0.35 + Math.random()*0.35).toFixed(2);
+        const dur = 6 + Math.random() * 8;
+        heart.style.animationDuration = dur + "s";
+        document.body.appendChild(heart);
+        setTimeout(() => heart.remove(), dur * 1000);
+      };
+      setInterval(spawnHearts, 240);
+
+      const stage = document.getElementById("stage");
+      const buttons = document.getElementById("buttons");
+      const yesBtn = document.getElementById("yesBtn");
+      const noBtn = document.getElementById("noBtn");
+      const statusPill = document.getElementById("statusPill");
+      const attemptsPill = document.getElementById("attemptsPill");
+      const success = document.getElementById("success");
+
+      let noAttempts = 0;
+
+      // ✅ Option 2: "Mostly stays put" tuning
+      let lastDodge = 0;
+      const DODGE_COOLDOWN_MS = 900;  // slower movement
+      const DODGE_DELAY_MS = 140;     // pause so text is readable
+      const MOVE_EVERY_N_TRIES = 1;   // only moves every 1 interactions (mostly stays put)
+
+      const noPhrases = [
+        "No 🙃",
+        "Maisie… pls 😭",
+        "This is not very nice of you 🙁",
+        "It is not nice to torture me 💔",
+        "Try again, for science 🧪",
+        "We could do this all day 🏃‍",
+        "Jay is panicking (politely) 🔄",
+        "Wrong answer, again ❌",
+        "Ok… what if it was ‘yes’? 🥺",
+        "Fine. I’m turning into Yes 😇"
+      ];
+
+      const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+
+      function acceptYes(){
+        statusPill.textContent = "Status: Maisie said YES 💘 Jay is acting normal (lying).";
+        stage.classList.add("expanded");
+        buttons.style.display = "none";
+        success.classList.add("show");
+        popConfetti();
+        success.scrollIntoView({behavior:"smooth", block:"nearest"});
+      }
+
+      function maybeDodge(){
+        const now = Date.now();
+        if (now - lastDodge < DODGE_COOLDOWN_MS) return;
+        lastDodge = now;
+
+        noAttempts++;
+        attemptsPill.textContent = `No attempts: ${noAttempts}`;
+
+        const shrink = clamp(1 - noAttempts * 0.04, 0.75, 1);
+
+        // Change label each time (so it's funny/readable)
+        if (noAttempts >= noPhrases.length - 1) {
+          noBtn.textContent = "Yes 💚";
+          noBtn.style.background = "linear-gradient(135deg, #22c55e, #16a34a)";
+          statusPill.textContent = "Status: The universe corrected itself ✅";
+          noBtn.onclick = acceptYes;
+          return;
+        } else {
+          noBtn.textContent = noPhrases[noAttempts];
+          statusPill.textContent = "Status: “No” is considering its life choices…";
+        }
+
+        // ✅ Only MOVE every N tries (mostly stays put)
+        const shouldMove = (noAttempts % MOVE_EVERY_N_TRIES === 0);
+
+        if (!shouldMove) {
+          // Tiny little “nudge” so it feels alive but readable
+          noBtn.style.transform = `translate(20%, -50%) scale(${shrink})`;
+          noBtn.animate(
+            [{transform:`translate(20%, -50%) scale(${shrink})`},
+             {transform:`translate(20%, -50%) scale(${shrink}) rotate(-1deg)`},
+             {transform:`translate(20%, -50%) scale(${shrink}) rotate(1deg)`},
+             {transform:`translate(20%, -50%) scale(${shrink})`}],
+            {duration:220, iterations:1}
+          );
+          return;
+        }
+
+        // ✅ Pause briefly so she can read the new text, then move
+        setTimeout(() => {
+          const rect = stage.getBoundingClientRect();
+          const btnRect = noBtn.getBoundingClientRect();
+          const padding = 14;
+
+          const maxX = rect.width - btnRect.width - padding;
+          const maxY = rect.height - btnRect.height - padding;
+
+          const x = padding + Math.random() * maxX;
+          const y = padding + Math.random() * maxY;
+
+          noBtn.style.left = x + "px";
+          noBtn.style.top = y + "px";
+          noBtn.style.transform = `translate(0,0) scale(${shrink})`;
+
+          // gentler wiggle
+          stage.animate(
+            [
+              {transform:"translate(0,0)"},
+              {transform:"translate(-1px,0)"},
+              {transform:"translate(1px,0)"},
+              {transform:"translate(0,0)"}
+            ],
+            {duration:180, iterations:1}
+          );
+        }, DODGE_DELAY_MS);
+      }
+
+      // Buttons respond
+      yesBtn.addEventListener("click", acceptYes);
+
+      // ✅ Less chaos: dodges only when you interact with the button
+      noBtn.addEventListener("mouseenter", maybeDodge);
+      noBtn.addEventListener("click", (e) => { e.preventDefault(); maybeDodge(); });
+      noBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); maybeDodge(); });
+
+      // ✅ Removed "finger-near" dodging entirely (too chaotic)
+
+      // Confetti
+      const canvas = document.getElementById("confetti");
+      const ctx = canvas.getContext("2d");
+      let confetti = [];
+      let confettiAnim;
+
+      function resizeCanvas(){
+        const r = document.getElementById("card").getBoundingClientRect();
+        canvas.width = Math.floor(r.width);
+        canvas.height = Math.floor(r.height);
+      }
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+
+      function popConfetti(){
+        cancelAnimationFrame(confettiAnim);
+        resizeCanvas();
+        confetti = Array.from({length: 190}, () => ({
+          x: canvas.width/2,
+          y: canvas.height/3,
+          vx: (Math.random()-0.5)*11,
+          vy: (Math.random()-1.0)*11,
+          g: 0.22 + Math.random()*0.18,
+          s: 4 + Math.random()*7,
+          r: Math.random()*Math.PI
+        }));
+        const start = performance.now();
+
+        function tick(t){
+          const elapsed = t - start;
+          ctx.clearRect(0,0,canvas.width,canvas.height);
+          confetti.forEach(p => {
+            p.vy += p.g;
+            p.x += p.vx;
+            p.y += p.vy;
+            p.r += 0.12;
+
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.r);
+            ctx.fillStyle = `hsla(${(p.x+p.y)%360}, 90%, 60%, 0.9)`;
+            ctx.fillRect(-p.s/2, -p.s/2, p.s, p.s*0.7);
+            ctx.restore();
+          });
+
+          confetti = confetti.filter(p => p.y < canvas.height + 40 && p.x > -40 && p.x < canvas.width + 40);
+
+          if (elapsed < 2300 && confetti.length){
+            confettiAnim = requestAnimationFrame(tick);
+          } else {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+          }
+        }
+        confettiAnim = requestAnimationFrame(tick);
+      }
+
+      // Copy plan
+      document.getElementById("copyBtn").addEventListener("click", async () => {
+        const where = document.getElementById("where").value;
+        const when = document.getElementById("when").value;
+        const dress = document.getElementById("dress").value;
+        const promise = document.getElementById("promise").value;
+
+        const text =
+`💘 Valentine’s Date Plan (Jay + Maisie) 💘
+Where: ${where}
+When: ${when}
+Dress code: ${dress}
+Jay’s promise: ${promise}
+
+(Officially accepted ✅)`;
+
+        try{
+          await navigator.clipboard.writeText(text);
+          statusPill.textContent = "Status: Date plan copied 📋";
+        }catch(e){
+          statusPill.textContent = "Status: Couldn’t auto-copy (screenshot works!)";
+        }
+      });
+
+      document.getElementById("replayBtn").addEventListener("click", popConfetti);
+    });
+  </script>
+</body>
+</html>
